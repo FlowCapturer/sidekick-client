@@ -308,7 +308,7 @@ const CreateOrg = () => {
                     onChange={(e) => setCanShowTeamMembers(e.target.checked)}
                   />
                   <Label htmlFor="doIncludeUsers" className="font-medium mt-2 ml-1">
-                    Would you like to invite your team members in this {appInfo.account_type_txt.singular}?
+                    Would you like to invite your team-members in this {appInfo.account_type_txt.singular}?
                   </Label>
                 </FlexColsLayout>,
                 ...(canShowTeamMembers
