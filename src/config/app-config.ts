@@ -21,6 +21,7 @@ export const appInfo = {
   razorPayKey: '',
   themeColor: '#00c950',
   serverUrl: 'http://192.168.31.71:6001',
+  homepageUrl: '',
 };
 
 export const setAppInfo = (info: Partial<typeof appInfo>) => {

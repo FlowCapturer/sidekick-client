@@ -9,7 +9,7 @@ import { showSuccessToast, showWarningToast } from '@/lib/toast-helper';
 import type { OrganizationType, OrganizationTypeResponse, purchasedPlansInf } from '@/lib/types';
 import AppContext from '@/store/AppContext';
 import { Check, Plus, X } from 'lucide-react';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import useOrgHelper from './hooks/useOrgHelper';
 import { INVITATION_ENUMS } from '@/lib/utils';
 import FlexColsLayout from '@/components/custom/Layouts/FlexColsLayout';
@@ -17,7 +17,7 @@ import PremiumIcon from '../Subscriptions/components/PremiumIcon';
 import { useNavigate } from 'react-router';
 
 const ManageOrgs = () => {
-  const { orgs, setOrgs, featureFlags, loggedInUser, setActiveOrg } = useContext(AppContext);
+  const { orgs, setOrgs, featureFlags, loggedInUser, setActiveOrg, activeOrg } = useContext(AppContext);
   const dlg = useAlertDialog();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -28,12 +28,29 @@ const ManageOrgs = () => {
     try {
       const orgsRes = (await getAxiosInstance().get('organization')) as OrganizationTypeResponse;
       setOrgs(orgsRes?.orgs || []);
+
+      if (activeOrg) {
+        //If activeOrg exits, and if activeOrg is no longer in the list, reset it
+        const stillExists = orgsRes.orgs.find((org) => org.org_id === activeOrg.org_id);
+        if (!stillExists) {
+          setActiveOrg(orgsRes.orgs[0]);
+        }
+      } else {
+        //If no activeOrg, set to first org in the list
+        if (orgsRes.orgs.length > 0) setActiveOrg(orgsRes.orgs[0]);
+      }
     } catch {
       setOrgs([]);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (orgs.length > 0 && !activeOrg) {
+      setActiveOrg(orgs[0]);
+    }
+  }, []);
 
   // useEffect(() => {
   //   reloadData();
@@ -105,7 +122,7 @@ const ManageOrgs = () => {
 
                     setLoading(true);
                     try {
-                      const res: any = await getAxiosInstance().delete('organization/' + org.org_id);
+                      const res: { message: string } = await getAxiosInstance().delete('organization/' + org.org_id);
                       showSuccessToast({
                         header: `${appInfo.account_type_txt.singular} has been deleted successfully.`,
                         description: res.message,
