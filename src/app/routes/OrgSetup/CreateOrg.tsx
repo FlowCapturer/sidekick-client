@@ -239,7 +239,7 @@ const CreateOrg = () => {
 
   const defaultOrgName = isEditMode
     ? orgRecord?.org_name
-    : `${loggedInUser?.fname}'s ${appInfo.account_type_txt.singular} ${orgs.length >= 1 ? orgs.length + 1 : ''}`;
+    : `${loggedInUser?.fname}'s ${appInfo.account_type_txt.singular} ${orgs.length >= 1 ? orgs.length + 1 : ''}`.trim();
 
   return (
     <FlexColsLayout className="pb-5 sm:px-0 px-5 pt-5">
