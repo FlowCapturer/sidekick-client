@@ -41,7 +41,7 @@ export const invokeRazorPay = (
 ) => {
   return new Promise((resolve, reject) => {
     const options = {
-      key: appInfo.razorPayKey,
+      key: appInfo.RAZOR_PAY_KEY,
       amount: totalFinalPrice * 100,
       currency: CURRENCY as CurrencyCode,
       order_id: createdOrderResponse.orderId,
@@ -70,7 +70,7 @@ export const invokeRazorPay = (
       },
 
       prefill: prefillObject,
-      theme: { color: appInfo.themeColor },
+      theme: { color: appInfo.THEME_COLOR },
       modal: {
         ondismiss: function () {
           // User closed the payment dialog without completing payment

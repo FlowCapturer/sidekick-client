@@ -66,8 +66,8 @@ export function PricingTbl() {
         <TypographyHeading className="mb-2 mt-15 font-medium text-lg">Still have questions?</TypographyHeading>
         <p className="text-muted-foreground">
           Reach out to our support team at{' '}
-          <a href={`mailto:${appInfo.supportEmail}`} className="text-primary underline">
-            {appInfo.supportEmail}
+          <a href={`mailto:${appInfo.SUPPORT_EMAIL}`} className="text-primary underline">
+            {appInfo.SUPPORT_EMAIL}
           </a>{' '}
           for personalized assistance.
         </p>

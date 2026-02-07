@@ -104,7 +104,7 @@ export default function LoginForm() {
           </NavLink>
         </div>
         <div className="text-center">
-          <Turnstile ref={turnstileRef} siteKey={appInfo.cloudFareKey} onSuccess={(token) => setTurnstileToken(token)} />
+          <Turnstile ref={turnstileRef} siteKey={appInfo.CLOUDFLARE_CAPTCHA_KEY} onSuccess={(token) => setTurnstileToken(token)} />
         </div>
         <Button type="submit" className="w-full" size={'lg'} loading={isPending}>
           Login

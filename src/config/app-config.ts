@@ -16,12 +16,12 @@ export const appInfo = {
     plural: 'Teams',
     value: APP_INFO_ACCOUNT_TYPE.TEAM,
   },
-  supportEmail: 'support@gammatech.com',
-  cloudFareKey: '',
-  razorPayKey: '',
-  themeColor: '#00c950',
-  serverUrl: 'http://192.168.31.71:6001',
-  homepageUrl: '',
+  SUPPORT_EMAIL: 'support@gammatech.com',
+  CLOUDFLARE_CAPTCHA_KEY: '',
+  RAZOR_PAY_KEY: '',
+  THEME_COLOR: '#00c950',
+  BACKEND_URL: 'http://192.168.31.71:6001',
+  HOMEPAGE_URL: '',
 };
 
 export const setAppInfo = (info: Partial<typeof appInfo>) => {

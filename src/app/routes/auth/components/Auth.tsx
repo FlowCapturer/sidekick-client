@@ -25,7 +25,7 @@ export default function Auth() {
           </Card>
           <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
             By clicking continue, you agree to our{' '}
-            <a href={appInfo.homepageUrl + '/privacy-policy'} target="_blank">
+            <a href={appInfo.HOMEPAGE_URL + '/privacy-policy'} target="_blank">
               Privacy Policy
             </a>
             .

@@ -21,7 +21,7 @@ const getAxiosInstance = (): AxiosInstance => {
   }
 
   axiosInstance = axios.create({
-    baseURL: appInfo.serverUrl,
+    baseURL: appInfo.BACKEND_URL,
     headers: {
       api: getLocalStorage('apiKey') || '',
       'Content-Type': 'application/json',
