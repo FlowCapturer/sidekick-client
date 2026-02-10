@@ -13,7 +13,6 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { setLocalStorage } from '@/lib/utils';
 import { useNavigate } from 'react-router';
-import LinkWrapper from '../custom/LinkWrapper';
 import { useContext, useState } from 'react';
 import AppContext from '@/store/AppContext';
 import { isFreePlan } from '@/app/routes/Subscriptions/utils/subscription-utils';

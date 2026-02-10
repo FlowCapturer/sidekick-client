@@ -4,12 +4,13 @@ import { Label } from '@/components/ui/label';
 import { appInfo } from '@/config/app-config';
 import { showErrorToast, showSuccessToast } from '@/lib/toast-helper';
 import { errorLogger, getFormDataByFormEl, validatePassword } from '@/lib/utils';
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useContext, useEffect, useRef, useState, useTransition } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import PasswordPolicyIBtn from './components/PasswordPolicyIBtn';
 import SendOTP from './components/SendOTP';
 import InputOTPField from './components/InputOTPField';
 import { getAxiosInstance } from '@/lib/axios-utils';
+import AppContext from '@/store/AppContext';
 
 export default function RegistrationForm() {
   const sendOTPCmp = useRef<HTMLInputElement>(null);
@@ -20,10 +21,14 @@ export default function RegistrationForm() {
   const [email, setEmail] = useState('');
   const [isPending, startTransition] = useTransition();
   const navigate = useNavigate();
+  const {
+    featureFlags: { ff_enable_email_related_features },
+  } = useContext(AppContext);
 
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!otp) {
+
+    if (ff_enable_email_related_features && !otp) {
       showErrorToast({
         header: 'OTP Required!',
         description: 'Please enter your OTP and try again.',
@@ -33,7 +38,7 @@ export default function RegistrationForm() {
     }
 
     const reqObj = getFormDataByFormEl(event.currentTarget);
-    reqObj.otp = otp;
+    reqObj.otp = otp || '';
     reqObj.user_email = email;
 
     const isValid = validatePassword(reqObj.user_password as string);
@@ -96,12 +101,16 @@ export default function RegistrationForm() {
           <div className={gridCls}>
             <Label htmlFor="emailOTPGenerated">Email *</Label>
             <Input id="emailOTPGenerated" type="email" name="email" placeholder="mail@example.com" value={email} disabled required />
-            <span className="ml-auto text-xs underline-offset-4 hover:underline cursor-pointer italic" onClick={reSendOTP}>
-              Change Email
-            </span>
+            {ff_enable_email_related_features ? (
+              <span className="ml-auto text-xs underline-offset-4 hover:underline cursor-pointer italic" onClick={reSendOTP}>
+                Change Email
+              </span>
+            ) : null}
           </div>
 
-          <InputOTPField className={gridCls} inputOTPField={inputOTPFieldRef} otp={otp} setOtp={setOtp} onChangeEmailClick={reSendOTP} />
+          {ff_enable_email_related_features ? (
+            <InputOTPField className={gridCls} inputOTPField={inputOTPFieldRef} otp={otp} setOtp={setOtp} onChangeEmailClick={reSendOTP} />
+          ) : null}
 
           <div className="flex gap-4">
             <div className={gridCls + ' flex-1'}>

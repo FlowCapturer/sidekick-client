@@ -2,8 +2,41 @@ import { Outlet } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { appInfo } from '../../../../config/app-config';
+import { useContext, useEffect, useState } from 'react';
+import { getAxiosInstance } from '@/lib';
+import type { IFeatureFlagsResponse } from '@/lib/types';
+import AppContext from '@/store/AppContext';
+import { FullPageLoading } from '@/components/custom';
 
 export default function Auth() {
+  const { setFeatureFlags } = useContext(AppContext);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    const fetchFeatureFlags = async () => {
+      try {
+        setIsLoading(true);
+        const featuresFlg = (await getAxiosInstance().get('/feature-flags', { signal: abortController.signal })) as IFeatureFlagsResponse;
+
+        console.log('Fetched feature flags:', featuresFlg); // Debug log to verify fetched flags
+        setFeatureFlags(featuresFlg.featureFlags);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFeatureFlags();
+
+    return () => {
+      abortController.abort();
+    };
+  }, []);
+
+  if (isLoading) {
+    return <FullPageLoading />;
+  }
+
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">

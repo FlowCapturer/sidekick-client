@@ -40,6 +40,11 @@ const getAxiosInstance = (): AxiosInstance => {
       return response.data?.response;
     },
     (error) => {
+      if (error.message === 'canceled') {
+        // Don't show toast for canceled requests as they are intentional
+        throw error;
+      }
+
       if (!error.response) {
         showErrorToast({
           header: error.message || 'Network error',

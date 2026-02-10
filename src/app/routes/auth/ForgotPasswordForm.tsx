@@ -3,15 +3,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { showErrorToast, showSuccessToast } from '@/lib/toast-helper';
 import { errorLogger, getFormDataByFormEl, validatePassword } from '@/lib/utils';
-import { useEffect, useImperativeHandle, useRef, useState, useTransition, type Ref } from 'react';
+import { useContext, useEffect, useImperativeHandle, useRef, useState, useTransition, type Ref } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import PasswordPolicyIBtn from './components/PasswordPolicyIBtn';
 import { getAxiosInstance } from '@/lib/axios-utils';
 import SendOTP from './components/SendOTP';
 import InputOTPField from './components/InputOTPField';
+import AppContext from '@/store/AppContext';
 
 interface ResetFormProps {
-  ref: Ref<{}>;
+  ref: Ref<{ focus: () => void }>;
   gridCls: string;
   onChangeEmailClick: () => void;
   email: string;
@@ -22,11 +23,14 @@ const ResentForm = ({ ref, gridCls, onChangeEmailClick, email }: ResetFormProps)
   const [isPending, startTransition] = useTransition();
   const navigate = useNavigate();
   const inputOTPFieldRef = useRef<HTMLInputElement>(null);
+  const {
+    featureFlags: { ff_enable_email_related_features },
+  } = useContext(AppContext);
 
   const handleOnSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!otp) {
+    if (ff_enable_email_related_features && !otp) {
       showErrorToast({
         header: 'OTP Required!',
         description: 'Please enter your OTP and try again.',
@@ -75,29 +79,29 @@ const ResentForm = ({ ref, gridCls, onChangeEmailClick, email }: ResetFormProps)
     });
   };
 
-  useImperativeHandle(
-    ref,
-    () => {
-      return {
-        focus() {
-          inputOTPFieldRef.current?.focus();
-        },
-      };
-    },
-    [],
-  );
+  useImperativeHandle(ref, () => {
+    return {
+      focus() {
+        inputOTPFieldRef.current?.focus();
+      },
+    };
+  }, []);
 
   return (
     <form onSubmit={handleOnSubmit} className="grid gap-6">
       <div className={gridCls}>
         <Label htmlFor="emailOTPGenerated">Email *</Label>
         <Input id="emailOTPGenerated" type="email" name="user_email" placeholder="mail@example.com" value={email} disabled required />
-        <span className="ml-auto text-xs underline-offset-4 hover:underline cursor-pointer italic" onClick={() => onChangeEmailClick()}>
-          Change Email
-        </span>
+        {ff_enable_email_related_features && (
+          <span className="ml-auto text-xs underline-offset-4 hover:underline cursor-pointer italic" onClick={() => onChangeEmailClick()}>
+            Change Email
+          </span>
+        )}
       </div>
 
-      <InputOTPField className={gridCls} inputOTPField={inputOTPFieldRef} otp={otp} setOtp={setOtp} onChangeEmailClick={onChangeEmailClick} />
+      {ff_enable_email_related_features ? (
+        <InputOTPField className={gridCls} inputOTPField={inputOTPFieldRef} otp={otp} setOtp={setOtp} onChangeEmailClick={onChangeEmailClick} />
+      ) : null}
 
       <div className={gridCls}>
         <Label htmlFor="password">
