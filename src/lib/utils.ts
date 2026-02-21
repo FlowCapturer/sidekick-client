@@ -44,7 +44,11 @@ export const findNavMenu = <K extends keyof NavItem>(moduleName: NavItem[K]): Na
   //checking in virtualChildOf
   const virtualChild = navigationItems.virtualChildOf.find((vc) => vc.id === moduleName);
   if (virtualChild) {
-    return flatNavMap.find((el) => el.url === virtualChild.parentId);
+    return {
+      parent: flatNavMap.find((el) => el.url === virtualChild.parentId),
+      url: virtualChild.id,
+      title: virtualChild.title,
+    };
   }
 
   return undefined;

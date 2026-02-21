@@ -22,6 +22,7 @@ export interface NavItem {
 export interface IVirtualChildOf {
   parentId: string;
   id: string;
+  title: string;
 }
 
 export interface LoginCmd {

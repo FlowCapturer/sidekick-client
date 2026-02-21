@@ -22,8 +22,6 @@ const RequireAuth = ({ children }: RequireAuthProps) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 200));
-
         const featuresFlg = (await getAxiosInstance().get('/feature-flags')) as IFeatureFlagsResponse;
         setFeatureFlags(featuresFlg.featureFlags);
 

@@ -3,6 +3,7 @@ import type { NavItem } from '@/lib/types';
 import type { JSX } from 'react';
 import { Fragment } from 'react';
 import useSelectedNavItem from '@/hooks/useSelectedNavItem';
+import { LinkWrapper } from '@/components/custom';
 
 const AppBreadcrumb = () => {
   const selectedNavItem = useSelectedNavItem();
@@ -13,7 +14,15 @@ const AppBreadcrumb = () => {
     result.push(
       <Fragment key={navItem.title}>
         <BreadcrumbItem>
-          {isRoot ? <BreadcrumbPage>{navItem.title}</BreadcrumbPage> : <BreadcrumbLink>{navItem.title}</BreadcrumbLink>}
+          {isRoot ? (
+            <BreadcrumbPage>{navItem.title}</BreadcrumbPage>
+          ) : navItem.url ? (
+            <LinkWrapper to={'app/' + (navItem.url || '')}>
+              <BreadcrumbLink>{navItem.title}</BreadcrumbLink>
+            </LinkWrapper>
+          ) : (
+            <BreadcrumbLink>{navItem.title}</BreadcrumbLink>
+          )}
         </BreadcrumbItem>
         {!isRoot && <BreadcrumbSeparator />}
       </Fragment>,
