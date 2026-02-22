@@ -73,7 +73,7 @@ const ManageOrgs = () => {
               placeholder: `Search by ${appInfo.account_type_txt.singular} Name...`,
               searchField: 'org_name',
             },
-            canShowColumnsBtn: true,
+            canShowColumnsBtn: false,
             additionalJSX: [
               <LinkWrapper to={'/infrastructure/create-new-org'}>
                 <Button variant="default">
