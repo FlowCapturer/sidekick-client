@@ -7,6 +7,7 @@ import { getAxiosInstance } from '@/lib/axios-utils';
 import type { ISubscriptionConfig } from '@/lib/billingsdk-config';
 import AppContext from '@/store/AppContext';
 import { useContext, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 
 export function PricingTbl() {
@@ -14,17 +15,19 @@ export function PricingTbl() {
   const { subscriptionConfig, setSubscriptionConfig } = useContext(AppContext);
   const { plans, faqs } = subscriptionConfig;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if ('plans' in subscriptionConfig === false) {
-        const subscriptionConfigResponse = (await getAxiosInstance().get('/get-subscription-config')) as ISubscriptionConfig;
-        setSubscriptionConfig(subscriptionConfigResponse);
-      }
-    };
-    fetchData();
-  }, [setSubscriptionConfig, subscriptionConfig]);
+  const { data: subscriptionConfigData, isLoading } = useQuery({
+    queryKey: ['subscriptionConfig'],
+    queryFn: () => getAxiosInstance().get('/get-subscription-config') as Promise<ISubscriptionConfig>,
+    // enabled: !('plans' in subscriptionConfig),
+  });
 
-  if ('plans' in subscriptionConfig === false) {
+  useEffect(() => {
+    if (subscriptionConfigData) {
+      setSubscriptionConfig(subscriptionConfigData);
+    }
+  }, [subscriptionConfigData, setSubscriptionConfig]);
+
+  if (isLoading || !('plans' in subscriptionConfig)) {
     return <FullPageLoading />;
   }
 

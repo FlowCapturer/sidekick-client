@@ -8,11 +8,22 @@ import AlertDialog, { type AlertDialogOptionsProps } from './components/custom/A
 import { defaultAlertConfig, setLocalStorage } from './lib/utils';
 import type { loggedInUserInf, OrganizationType, purchasedPlansInf } from './lib/types';
 import type { ISubscriptionConfig } from './lib/billingsdk-config';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 interface IAppProps extends IRoutes {
   appRoutes: IRoutes['appRoutes'];
   publicRoutes?: IRoutes['publicRoutes'];
 }
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+      // staleTime: 5 * 60 * 1000,
+    },
+  },
+});
 
 function App({ appRoutes, publicRoutes }: IAppProps) {
   useTheme();
@@ -25,7 +36,6 @@ function App({ appRoutes, publicRoutes }: IAppProps) {
   const [activePlan, setActivePlan] = useState<purchasedPlansInf>();
   const [subscriptionConfig, setSubscriptionConfig] = useState<ISubscriptionConfig>({} as ISubscriptionConfig);
   const [featureFlags, setFeatureFlags] = useState<Record<string, boolean>>({});
-
   const setActiveOrgHandler = useCallback(
     (org: OrganizationType) => {
       if (!org) return;
@@ -37,30 +47,32 @@ function App({ appRoutes, publicRoutes }: IAppProps) {
   );
 
   return (
-    <AppContext.Provider
-      value={{
-        alertDlgOptions,
-        setAlertDlgOptions,
-        orgs,
-        setOrgs,
-        loggedInUser: loggedInUser || ({} as loggedInUserInf),
-        setLoggedInUser,
-        activeOrg,
-        setActiveOrg: setActiveOrgHandler,
-        purchasePlans,
-        setPurchasePlans,
-        activePlan,
-        setActivePlan,
-        subscriptionConfig,
-        setSubscriptionConfig,
-        featureFlags,
-        setFeatureFlags,
-      }}
-    >
-      <Routes appRoutes={appRoutes} publicRoutes={publicRoutes} />
-      <Toaster />
-      <AlertDialog options={alertDlgOptions} />
-    </AppContext.Provider>
+    <QueryClientProvider client={queryClient}>
+      <AppContext.Provider
+        value={{
+          alertDlgOptions,
+          setAlertDlgOptions,
+          orgs,
+          setOrgs,
+          loggedInUser: loggedInUser || ({} as loggedInUserInf),
+          setLoggedInUser,
+          activeOrg,
+          setActiveOrg: setActiveOrgHandler,
+          purchasePlans,
+          setPurchasePlans,
+          activePlan,
+          setActivePlan,
+          subscriptionConfig,
+          setSubscriptionConfig,
+          featureFlags,
+          setFeatureFlags,
+        }}
+      >
+        <Routes appRoutes={appRoutes} publicRoutes={publicRoutes} />
+        <Toaster />
+        <AlertDialog options={alertDlgOptions} />
+      </AppContext.Provider>
+    </QueryClientProvider>
   );
 }
 

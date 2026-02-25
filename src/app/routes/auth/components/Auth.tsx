@@ -2,7 +2,8 @@ import { Outlet } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { appInfo } from '../../../../config/app-config';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getAxiosInstance } from '@/lib';
 import type { IFeatureFlagsResponse } from '@/lib/types';
 import AppContext from '@/store/AppContext';
@@ -10,28 +11,17 @@ import { FullPageLoading } from '@/components/custom';
 
 export default function Auth() {
   const { setFeatureFlags } = useContext(AppContext);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['featureFlags'],
+    queryFn: () => getAxiosInstance().get('/feature-flags') as Promise<IFeatureFlagsResponse>,
+  });
 
   useEffect(() => {
-    const abortController = new AbortController();
-    const fetchFeatureFlags = async () => {
-      try {
-        setIsLoading(true);
-        const featuresFlg = (await getAxiosInstance().get('/feature-flags', { signal: abortController.signal })) as IFeatureFlagsResponse;
-
-        console.log('Fetched feature flags:', featuresFlg); // Debug log to verify fetched flags
-        setFeatureFlags(featuresFlg.featureFlags);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchFeatureFlags();
-
-    return () => {
-      abortController.abort();
-    };
-  }, []);
+    if (data?.featureFlags) {
+      setFeatureFlags(data.featureFlags);
+    }
+  }, [data, setFeatureFlags]);
 
   if (isLoading) {
     return <FullPageLoading />;
