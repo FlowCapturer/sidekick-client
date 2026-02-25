@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouterProvider, type RouteObject } from 'react-router';
-import { useContext, lazy, Suspense } from 'react';
+import { useContext, lazy, Suspense, useMemo } from 'react';
 import AppContext from '@/store/AppContext';
 import RequireAuth from './routes/components/RequireAuth';
 import FullPageLoading from '../components/custom/FullPageLoading';
@@ -30,107 +30,109 @@ export interface IRoutes {
 function Routes({ appRoutes, publicRoutes = [] }: IRoutes) {
   const { featureFlags } = useContext(AppContext);
 
-  const router = createBrowserRouter([
-    {
-      path: '/',
-      element: (
-        <RequireAuth>
-          <Dashboard />
-        </RequireAuth>
-      ),
-      children: [
-        ...appRoutes,
-        {
-          path: 'app/general-settings',
-          Component: GeneralSettingsPg,
-        },
-        {
-          path: 'app/*',
-          element: <NotFound canShowHeader={false} />,
-        },
-      ],
-    },
-    ...(featureFlags.ff_enable_paid_subscription === false
-      ? []
-      : [
+  const router = useMemo(() => {
+    return createBrowserRouter([
+      {
+        path: '/',
+        element: (
+          <RequireAuth>
+            <Dashboard />
+          </RequireAuth>
+        ),
+        children: [
+          ...appRoutes,
           {
-            path: 'plans',
-            Component: PricingTbl,
+            path: 'app/general-settings',
+            Component: GeneralSettingsPg,
           },
-        ]),
-    ...publicRoutes,
-    {
-      path: 'infrastructure',
-      element: (
-        <RequireAuth>
-          <OrgRootLayout />
-        </RequireAuth>
-      ),
-      children: [
-        ...(featureFlags.ff_enable_teams === false
-          ? []
-          : [
-              {
-                index: true,
-                Component: OrgSetup,
-              },
-              {
-                path: 'create-new-org',
-                Component: CreateOrg,
-              },
-              {
-                path: 'edit-org/:orgId',
-                Component: CreateOrg,
-              },
-              {
-                path: 'user-invitations',
-                Component: JoinOrg,
-              },
-              {
-                path: 'manage-infra',
-                Component: ManageOrgs,
-              },
-            ]),
-        ...(featureFlags.ff_enable_paid_subscription === false
-          ? []
-          : [
-              {
-                path: 'manage-subscription',
-                Component: SubscriptionMgmt,
-              },
-              {
-                path: 'checkout',
-                Component: Checkout,
-              },
-              {
-                path: 'payment-history',
-                Component: PaymentHistory,
-              },
-            ]),
-      ],
-    },
-    {
-      Component: Auth,
-      children: [
-        {
-          path: 'login',
-          Component: LoginForm,
-        },
-        {
-          path: 'forgot-password',
-          Component: ForgotPasswordForm,
-        },
-        {
-          path: 'register',
-          Component: RegistrationForm,
-        },
-      ],
-    },
-    {
-      path: '*',
-      Component: NotFound,
-    },
-  ]);
+          {
+            path: 'app/*',
+            element: <NotFound canShowHeader={false} />,
+          },
+        ],
+      },
+      ...(featureFlags.ff_enable_paid_subscription === false
+        ? []
+        : [
+            {
+              path: 'plans',
+              Component: PricingTbl,
+            },
+          ]),
+      ...publicRoutes,
+      {
+        path: 'infrastructure',
+        element: (
+          <RequireAuth>
+            <OrgRootLayout />
+          </RequireAuth>
+        ),
+        children: [
+          ...(featureFlags.ff_enable_teams === false
+            ? []
+            : [
+                {
+                  index: true,
+                  Component: OrgSetup,
+                },
+                {
+                  path: 'create-new-org',
+                  Component: CreateOrg,
+                },
+                {
+                  path: 'edit-org/:orgId',
+                  Component: CreateOrg,
+                },
+                {
+                  path: 'user-invitations',
+                  Component: JoinOrg,
+                },
+                {
+                  path: 'manage-infra',
+                  Component: ManageOrgs,
+                },
+              ]),
+          ...(featureFlags.ff_enable_paid_subscription === false
+            ? []
+            : [
+                {
+                  path: 'manage-subscription',
+                  Component: SubscriptionMgmt,
+                },
+                {
+                  path: 'checkout',
+                  Component: Checkout,
+                },
+                {
+                  path: 'payment-history',
+                  Component: PaymentHistory,
+                },
+              ]),
+        ],
+      },
+      {
+        Component: Auth,
+        children: [
+          {
+            path: 'login',
+            Component: LoginForm,
+          },
+          {
+            path: 'forgot-password',
+            Component: ForgotPasswordForm,
+          },
+          {
+            path: 'register',
+            Component: RegistrationForm,
+          },
+        ],
+      },
+      {
+        path: '*',
+        Component: NotFound,
+      },
+    ]);
+  }, [featureFlags]);
   return (
     <Suspense fallback={<FullPageLoading />}>
       <RouterProvider router={router} />

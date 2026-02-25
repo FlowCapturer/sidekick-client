@@ -15,7 +15,7 @@ const SubscriptionMgmt = () => {
   const { plans, CURRENCY_SYMBOL } = subscriptionConfig;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const activePurchasedPlan = plans.find((p) => p.id === activePlan?.plan_id) || plans[0];
+  const activePurchasedPlan = plans?.find((p) => p.id === activePlan?.plan_id) || plans?.[0];
 
   const upcomingPlans = useMemo(
     () => purchasePlans.filter((purchasePlan) => purchasePlan.status === 'paid' && new Date(purchasePlan.startAt) > new Date()).reverse(),

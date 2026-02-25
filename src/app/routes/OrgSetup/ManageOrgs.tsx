@@ -10,6 +10,7 @@ import type { OrganizationType, OrganizationTypeResponse, purchasedPlansInf } fr
 import AppContext from '@/store/AppContext';
 import { Check, Plus, X } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import useOrgHelper from './hooks/useOrgHelper';
 import { INVITATION_ENUMS } from '@/lib/utils';
 import FlexColsLayout from '@/components/custom/Layouts/FlexColsLayout';
@@ -23,34 +24,40 @@ const ManageOrgs = () => {
   const navigate = useNavigate();
   const { editOrganization } = useOrgHelper();
 
-  const reloadData = async () => {
-    setLoading(true);
-    try {
-      const orgsRes = (await getAxiosInstance().get('organization')) as OrganizationTypeResponse;
-      setOrgs(orgsRes?.orgs || []);
-
-      if (activeOrg) {
-        //If activeOrg exits, and if activeOrg is no longer in the list, reset it
-        const stillExists = orgsRes.orgs.find((org) => org.org_id === activeOrg.org_id);
-        if (!stillExists) {
-          setActiveOrg(orgsRes.orgs[0]);
-        }
-      } else {
-        //If no activeOrg, set to first org in the list
-        if (orgsRes.orgs.length > 0) setActiveOrg(orgsRes.orgs[0]);
-      }
-    } catch {
-      setOrgs([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: orgsData,
+    isLoading: isLoadingOrgs,
+    isRefetching: isRefetchingOrgs,
+    refetch: refetchOrgs,
+  } = useQuery({
+    queryKey: ['organizations'],
+    queryFn: () => getAxiosInstance().get('organization') as Promise<OrganizationTypeResponse>,
+  });
 
   useEffect(() => {
-    if (orgs.length > 0 && !activeOrg) {
-      setActiveOrg(orgs[0]);
+    if (orgsData) {
+      const fetchedOrgs = orgsData?.orgs || [];
+      setOrgs(fetchedOrgs);
+
+      if (activeOrg) {
+        // If activeOrg exists, and if activeOrg is no longer in the list, reset it
+        const stillExists = fetchedOrgs.find((org) => org.org_id === activeOrg.org_id);
+        if (!stillExists) {
+          setActiveOrg(fetchedOrgs[0]);
+        }
+      } else {
+        // If no activeOrg, set to first org in the list
+        if (fetchedOrgs.length > 0) setActiveOrg(fetchedOrgs[0]);
+      }
     }
-  }, []);
+  }, [orgsData]);
+
+  const reloadData = async () => {
+    // Also invalidate the shared 'organizations' cache used by RequireAuth
+    // queryClient.invalidateQueries({ queryKey: ['organizations'] });
+
+    await refetchOrgs();
+  };
 
   // useEffect(() => {
   //   reloadData();
@@ -66,7 +73,7 @@ const ManageOrgs = () => {
         <span className="ml-2">{appInfo.account_type_txt.plural}</span>
       </TypographyHeading> */}
         <DataTable
-          loading={loading}
+          loading={loading || isLoadingOrgs || isRefetchingOrgs}
           toolbarConfig={{
             canShowSearchField: true,
             searchFieldConfig: {

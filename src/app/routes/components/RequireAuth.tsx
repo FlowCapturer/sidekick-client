@@ -4,69 +4,114 @@ import { getAxiosInstance } from '@/lib/axios-utils';
 import type { IFeatureFlagsResponse, OrganizationTypeResponse, SessionInfoResponse } from '@/lib/types';
 import { getLocalStorage } from '@/lib/utils';
 import AppContext from '@/store/AppContext';
-import { useState, useEffect, useContext, type ReactNode } from 'react';
+import { useEffect, useContext, type ReactNode, useState } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import type { ISubscriptionConfig } from '@/lib/billingsdk-config';
+import { useQuery } from '@tanstack/react-query';
 
 interface RequireAuthProps {
   children: ReactNode;
 }
 
 const RequireAuth = ({ children }: RequireAuthProps) => {
-  const [loading, setLoading] = useState(true);
   const location = useLocation();
-  const { orgs, setOrgs, loggedInUser, setLoggedInUser, setActiveOrg, subscriptionConfig, setSubscriptionConfig, featureFlags, setFeatureFlags } =
-    useContext(AppContext);
+  const { orgs, setOrgs, loggedInUser, setLoggedInUser, setActiveOrg, setSubscriptionConfig, featureFlags, setFeatureFlags } = useContext(AppContext);
   const { loadPurchasedPlans } = usePurchasedPlans();
+  const [isDataUpdatedInContext, setIsDataUpdatedInContext] = useState(false);
+
+  const { data: featureFlagsData, isLoading: isLoadingFeatureFlags } = useQuery({
+    queryKey: ['featureFlags'],
+    queryFn: () => getAxiosInstance().get('/feature-flags') as Promise<IFeatureFlagsResponse>,
+  });
+
+  const { data: sessionData, isLoading: isLoadingSession } = useQuery({
+    queryKey: ['session'],
+    queryFn: () => getAxiosInstance().get('/check-session') as Promise<SessionInfoResponse>,
+  });
+
+  const isAuthed = !!sessionData?.sessionInfo?.id;
+  const ff = featureFlagsData?.featureFlags;
+
+  const { data: orgsData, isLoading: isLoadingOrgs } = useQuery({
+    queryKey: ['organizations'],
+    queryFn: () => getAxiosInstance().get('organization') as Promise<OrganizationTypeResponse>,
+    enabled: isAuthed && !!ff?.ff_enable_teams,
+  });
+
+  const { data: subscriptionConfigData, isLoading: isLoadingSubConfig } = useQuery({
+    queryKey: ['subscriptionConfig'],
+    queryFn: () => getAxiosInstance().get('/get-subscription-config') as Promise<ISubscriptionConfig>,
+    enabled: !!ff?.ff_enable_paid_subscription, // && !('plans' in subscriptionConfig)
+  });
+
+  const { isLoading: isLoadingPurchasedPlans } = useQuery({
+    queryKey: ['purchasedPlans'],
+    queryFn: async () => {
+      await loadPurchasedPlans(true);
+      return true;
+    },
+    enabled: isAuthed && !!ff?.ff_enable_paid_subscription,
+  });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const featuresFlg = (await getAxiosInstance().get('/feature-flags')) as IFeatureFlagsResponse;
-        setFeatureFlags(featuresFlg.featureFlags);
+    if (featureFlagsData?.featureFlags) {
+      setFeatureFlags(featureFlagsData.featureFlags);
+    }
+  }, [featureFlagsData, setFeatureFlags]);
 
-        const sessionResponse = (await getAxiosInstance().get('/check-session')) as SessionInfoResponse;
-        const isAuthed = !!sessionResponse.sessionInfo?.id;
+  useEffect(() => {
+    if (sessionData) {
+      setLoggedInUser({
+        email: sessionData.user.user_email,
+        id: sessionData.sessionInfo?.id,
+        fname: sessionData.user.user_fname,
+        lname: sessionData.user.user_lname,
+        mobNo: String(sessionData.user.user_mobile_no),
+      });
+    }
+  }, [sessionData, setLoggedInUser]);
 
-        setLoggedInUser({
-          email: sessionResponse.user.user_email,
-          id: sessionResponse.sessionInfo?.id,
-          fname: sessionResponse.user.user_fname,
-          lname: sessionResponse.user.user_lname,
-          mobNo: String(sessionResponse.user.user_mobile_no),
-        });
+  useEffect(() => {
+    if (orgsData) {
+      const fetchedOrgs = orgsData.orgs;
+      setOrgs(fetchedOrgs);
 
-        if (isAuthed === true) {
-          if (featuresFlg.featureFlags.ff_enable_paid_subscription) {
-            await loadPurchasedPlans(true);
-          }
-
-          if (featuresFlg.featureFlags.ff_enable_teams) {
-            const orgsRes = (await getAxiosInstance().get('organization')) as OrganizationTypeResponse;
-            const fetchedOrgs = orgsRes?.orgs || [];
-            setOrgs(fetchedOrgs);
-
-            const activeOrgId = getLocalStorage('activeOrgId');
-            let lastSelectedOrg = fetchedOrgs[0];
-            if (activeOrgId) {
-              lastSelectedOrg = fetchedOrgs.find((org) => String(org.org_id) === activeOrgId) || lastSelectedOrg;
-            }
-            setActiveOrg(lastSelectedOrg);
-          }
-        }
-
-        if (featuresFlg.featureFlags.ff_enable_paid_subscription && 'plans' in subscriptionConfig === false) {
-          const subscriptionConfigResponse = (await getAxiosInstance().get('/get-subscription-config')) as ISubscriptionConfig;
-          setSubscriptionConfig(subscriptionConfigResponse);
-        }
-      } finally {
-        setLoading(false);
+      const activeOrgId = getLocalStorage('activeOrgId');
+      let lastSelectedOrg = fetchedOrgs[0];
+      if (activeOrgId) {
+        lastSelectedOrg = fetchedOrgs.find((org) => String(org.org_id) === activeOrgId) || lastSelectedOrg;
       }
-    };
-    fetchData();
-  }, []);
+      setActiveOrg(lastSelectedOrg);
+    }
+  }, [orgsData, setOrgs, setActiveOrg]);
 
-  if (loading) {
+  useEffect(() => {
+    if (subscriptionConfigData) {
+      setSubscriptionConfig(subscriptionConfigData);
+    }
+  }, [subscriptionConfigData, setSubscriptionConfig]);
+
+  const loading = isLoadingFeatureFlags || isLoadingSession || isLoadingOrgs || isLoadingPurchasedPlans || isLoadingSubConfig;
+
+  useEffect(() => {
+    if (loading || !orgsData) {
+      return;
+    }
+
+    const isSameOrgRef = orgsData.orgs === orgs;
+    const isSameSessionRef = sessionData && sessionData?.sessionInfo?.id && loggedInUser.id === sessionData.sessionInfo.id;
+
+    if (isSameOrgRef && isSameSessionRef) {
+      setIsDataUpdatedInContext(true);
+    }
+  }, [loading, orgs, orgsData, sessionData, loggedInUser]);
+
+  // ||
+  // (isAuthed && ff?.ff_enable_teams && isLoadingOrgs) ||
+  // (isAuthed && ff?.ff_enable_paid_subscription && isLoadingPurchasedPlans) ||
+  // (ff?.ff_enable_paid_subscription && isLoadingSubConfig);
+
+  if (loading || isDataUpdatedInContext !== true) {
     return <FullPageLoading />;
   }
 
