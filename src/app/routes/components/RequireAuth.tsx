@@ -73,7 +73,7 @@ const RequireAuth = ({ children }: RequireAuthProps) => {
 
   useEffect(() => {
     if (orgsData) {
-      const fetchedOrgs = orgsData?.orgs || [];
+      const fetchedOrgs = orgsData.orgs;
       setOrgs(fetchedOrgs);
 
       const activeOrgId = getLocalStorage('activeOrgId');
@@ -94,11 +94,11 @@ const RequireAuth = ({ children }: RequireAuthProps) => {
   const loading = isLoadingFeatureFlags || isLoadingSession || isLoadingOrgs || isLoadingPurchasedPlans || isLoadingSubConfig;
 
   useEffect(() => {
-    if (loading) {
+    if (loading || !orgsData) {
       return;
     }
 
-    const isSameOrgRef = orgsData && orgsData?.orgs?.length > 0 && orgs === orgsData?.orgs;
+    const isSameOrgRef = orgsData.orgs === orgs;
     const isSameSessionRef = sessionData && sessionData?.sessionInfo?.id && loggedInUser.id === sessionData.sessionInfo.id;
 
     if (isSameOrgRef && isSameSessionRef) {
