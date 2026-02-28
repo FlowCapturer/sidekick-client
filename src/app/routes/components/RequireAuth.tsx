@@ -94,12 +94,17 @@ const RequireAuth = ({ children }: RequireAuthProps) => {
   const loading = isLoadingFeatureFlags || isLoadingSession || isLoadingOrgs || isLoadingPurchasedPlans || isLoadingSubConfig;
 
   useEffect(() => {
-    if (loading || !orgsData) {
+    if (loading) {
       return;
     }
 
-    const isSameOrgRef = orgsData.orgs === orgs;
-    const isSameSessionRef = sessionData && sessionData?.sessionInfo?.id && loggedInUser.id === sessionData.sessionInfo.id;
+    if (!isAuthed) {
+      setIsDataUpdatedInContext(true);
+      return;
+    }
+
+    const isSameOrgRef = orgsData?.orgs === orgs;
+    const isSameSessionRef = loggedInUser.id === sessionData.sessionInfo?.id;
 
     if (isSameOrgRef && isSameSessionRef) {
       setIsDataUpdatedInContext(true);
