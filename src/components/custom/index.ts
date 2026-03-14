@@ -30,3 +30,5 @@ export { default as RichTextEditor } from './RichTextEditor';
 export { default as UrlChangesGuard } from './UrlChangesGuard';
 export { default as TabsWrapper } from './TabsWrapper';
 export { default as CopyTextField } from './CopyTextField';
+
+export type { IDataTableRef } from './DataTable/DataTable';
