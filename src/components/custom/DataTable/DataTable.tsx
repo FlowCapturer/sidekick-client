@@ -7,6 +7,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type Row,
   type SortingState,
   useReactTable,
   type VisibilityState,
@@ -28,6 +29,11 @@ import DataTablePagination from './DataTablePagination';
 import { formatISODateWithTime24H, isFunction } from '@/lib/utils';
 import LoadingMask from '../LoadingMask';
 import FlexColsLayout from '../Layouts/FlexColsLayout';
+import { useImperativeHandle } from 'react';
+
+export interface IDataTableRef<TData> {
+  getVisibleRows: () => Row<TData>[];
+}
 
 export interface columnProp {
   id: string;
@@ -53,6 +59,7 @@ interface DataTableProps<TData> {
   loading?: boolean;
   canShowToolbar?: boolean;
   canShowPagination?: boolean;
+  ref?: React.Ref<IDataTableRef<TData>>;
 }
 
 function DataTable<TData extends object>({
@@ -63,6 +70,7 @@ function DataTable<TData extends object>({
   loading = false,
   canShowToolbar = true,
   canShowPagination = true,
+  ref,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -166,6 +174,12 @@ function DataTable<TData extends object>({
       pagination,
     },
   });
+
+  useImperativeHandle(ref, () => ({
+    getVisibleRows: () => {
+      return table.getRowModel().rows;
+    },
+  }));
 
   const loadingCls = loading ? 'pointer-events-none opacity-50' : '';
   return (
