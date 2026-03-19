@@ -32,3 +32,4 @@ export { default as TabsWrapper } from './TabsWrapper';
 export { default as CopyTextField } from './CopyTextField';
 
 export type { IDataTableRef } from './DataTable/DataTable';
+export type { RichTextEditorRef, SlashMenuOption } from './RichTextEditor';
