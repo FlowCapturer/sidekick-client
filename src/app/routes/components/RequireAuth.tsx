@@ -103,13 +103,13 @@ const RequireAuth = ({ children }: RequireAuthProps) => {
       return;
     }
 
-    const isSameOrgRef = orgsData?.orgs === orgs;
+    const isSameOrgRef = ff?.ff_enable_teams ? orgsData?.orgs === orgs : true;
     const isSameSessionRef = loggedInUser.id === sessionData.sessionInfo?.id;
 
     if (isSameOrgRef && isSameSessionRef) {
       setIsDataUpdatedInContext(true);
     }
-  }, [loading, orgs, orgsData, sessionData, loggedInUser]);
+  }, [loading, orgs, orgsData, sessionData, loggedInUser, isAuthed, ff]);
 
   // ||
   // (isAuthed && ff?.ff_enable_teams && isLoadingOrgs) ||
