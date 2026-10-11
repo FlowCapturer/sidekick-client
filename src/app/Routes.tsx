@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, type RouteObject } from 'react-router';
+import { createBrowserRouter, Outlet, RouterProvider, type RouteObject } from 'react-router';
 import { useContext, lazy, Suspense, useMemo } from 'react';
 import AppContext from '@/store/AppContext';
 import RequireAuth from './routes/components/RequireAuth';
@@ -22,14 +22,26 @@ const Checkout = lazy(() => import('./routes/Subscriptions/Checkout'));
 const PaymentHistory = lazy(() => import('./routes/Subscriptions/PaymentHistory'));
 const GeneralSettingsPg = lazy(() => import('./routes/Dashboard/components/Settings/GeneralSettingsPg'));
 
+const EMPTY_ROUTES: RouteObject[] = [];
+
 export interface IRoutes {
   appRoutes: RouteObject[];
   publicRoutes?: RouteObject[];
 }
 
-function Routes({ appRoutes, publicRoutes = [] }: IRoutes) {
+type FeatureFlag = 'ff_enable_paid_subscription' | 'ff_enable_teams';
+
+function FeatureFlagRoute({ flag }: { flag: FeatureFlag }) {
   const { featureFlags } = useContext(AppContext);
 
+  if (featureFlags[flag] === false) {
+    return <NotFound canShowHeader={false} />;
+  }
+
+  return <Outlet />;
+}
+
+function Routes({ appRoutes, publicRoutes = EMPTY_ROUTES }: IRoutes) {
   const router = useMemo(() => {
     return createBrowserRouter([
       {
@@ -51,14 +63,15 @@ function Routes({ appRoutes, publicRoutes = [] }: IRoutes) {
           },
         ],
       },
-      ...(featureFlags.ff_enable_paid_subscription === false
-        ? []
-        : [
-            {
-              path: 'plans',
-              Component: PricingTbl,
-            },
-          ]),
+      {
+        element: <FeatureFlagRoute flag="ff_enable_paid_subscription" />,
+        children: [
+          {
+            path: 'plans',
+            Component: PricingTbl,
+          },
+        ],
+      },
       ...publicRoutes,
       {
         path: 'infrastructure',
@@ -68,46 +81,48 @@ function Routes({ appRoutes, publicRoutes = [] }: IRoutes) {
           </RequireAuth>
         ),
         children: [
-          ...(featureFlags.ff_enable_teams === false
-            ? []
-            : [
-                {
-                  index: true,
-                  Component: OrgSetup,
-                },
-                {
-                  path: 'create-new-org',
-                  Component: CreateOrg,
-                },
-                {
-                  path: 'edit-org/:orgId',
-                  Component: CreateOrg,
-                },
-                {
-                  path: 'user-invitations',
-                  Component: JoinOrg,
-                },
-                {
-                  path: 'manage-infra',
-                  Component: ManageOrgs,
-                },
-              ]),
-          ...(featureFlags.ff_enable_paid_subscription === false
-            ? []
-            : [
-                {
-                  path: 'manage-subscription',
-                  Component: SubscriptionMgmt,
-                },
-                {
-                  path: 'checkout',
-                  Component: Checkout,
-                },
-                {
-                  path: 'payment-history',
-                  Component: PaymentHistory,
-                },
-              ]),
+          {
+            element: <FeatureFlagRoute flag="ff_enable_teams" />,
+            children: [
+              {
+                index: true,
+                Component: OrgSetup,
+              },
+              {
+                path: 'create-new-org',
+                Component: CreateOrg,
+              },
+              {
+                path: 'edit-org/:orgId',
+                Component: CreateOrg,
+              },
+              {
+                path: 'user-invitations',
+                Component: JoinOrg,
+              },
+              {
+                path: 'manage-infra',
+                Component: ManageOrgs,
+              },
+            ],
+          },
+          {
+            element: <FeatureFlagRoute flag="ff_enable_paid_subscription" />,
+            children: [
+              {
+                path: 'manage-subscription',
+                Component: SubscriptionMgmt,
+              },
+              {
+                path: 'checkout',
+                Component: Checkout,
+              },
+              {
+                path: 'payment-history',
+                Component: PaymentHistory,
+              },
+            ],
+          },
         ],
       },
       {
@@ -132,7 +147,7 @@ function Routes({ appRoutes, publicRoutes = [] }: IRoutes) {
         Component: NotFound,
       },
     ]);
-  }, [featureFlags]);
+  }, [appRoutes, publicRoutes]);
   return (
     <Suspense fallback={<FullPageLoading />}>
       <RouterProvider router={router} />
